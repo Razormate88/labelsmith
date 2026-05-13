@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-05-13
+
+### Changed
+
+- `camel` and `pascal` styles now preserve all-uppercase tokens as
+  acronyms, so manufacturing/checksheet labels with industry-standard
+  acronyms stay recognizable. Examples:
+  - `field_name("AIAG/VDA Severity", style="pascal")` →
+    `"AIAGVDASeverity"` (was `"AiagVdaSeverity"`).
+  - `field_name("AIAG/VDA Severity", style="camel")` →
+    `"aiagVDASeverity"` (was `"aiagVdaSeverity"`).
+  - `field_name("N Gage Length (MACH)", style="pascal")` →
+    `"NGageLengthMACH"` (was `"NGageLengthMach"`).
+  - `field_name("HTTPResponseCode", style="pascal")` →
+    `"HTTPResponseCode"` (was `"HttpResponseCode"`).
+- `camel` continues to lowercase the first token (even when it is an
+  acronym), so `field_name("AIAG", style="camel")` is `"aiag"` while
+  `field_name("AIAG", style="pascal")` is `"AIAG"`.
+- `snake` and `kebab` are intentionally unchanged: every token is still
+  lowercased.
+
 ## [0.1.0] - 2026-05-13
 
 ### Added

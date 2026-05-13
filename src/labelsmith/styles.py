@@ -10,11 +10,27 @@ KEBAB = "kebab"
 SUPPORTED_STYLES: frozenset[str] = frozenset({SNAKE, CAMEL, PASCAL, KEBAB})
 
 
+def _styled_token(token: str) -> str:
+    """Title-case ``token`` unless it is an all-uppercase acronym.
+
+    All-uppercase alphabetic tokens (e.g. ``"AIAG"``, ``"OK"``, ``"MR"``)
+    are returned unchanged so manufacturing/checksheet acronyms stay
+    recognizable in ``camel`` and ``pascal`` output. Lower-case and
+    mixed-case tokens go through :py:meth:`str.capitalize`. Digit-only
+    tokens are unaffected because ``str.capitalize`` is a no-op there.
+    """
+    if token.isupper():
+        return token
+    return token.capitalize()
+
+
 def join_tokens(tokens: list[str], style: str) -> str:
     """Join cleaned alphanumeric ``tokens`` into a single name.
 
     Tokens are expected to already be alphanumeric and non-empty; callers
-    in :mod:`labelsmith.core` produce them via the tokenizer.
+    in :mod:`labelsmith.core` produce them via the tokenizer. ``camel``
+    and ``pascal`` preserve all-uppercase tokens as acronyms; ``snake``
+    and ``kebab`` always lowercase every token.
     """
     if not tokens:
         return ""
@@ -24,9 +40,9 @@ def join_tokens(tokens: list[str], style: str) -> str:
         return "-".join(token.lower() for token in tokens)
     if style == CAMEL:
         first, *rest = tokens
-        return first.lower() + "".join(token.capitalize() for token in rest)
+        return first.lower() + "".join(_styled_token(token) for token in rest)
     if style == PASCAL:
-        return "".join(token.capitalize() for token in tokens)
+        return "".join(_styled_token(token) for token in tokens)
     raise ValueError(f"Unsupported style: {style!r}")
 
 

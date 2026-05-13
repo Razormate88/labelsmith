@@ -54,6 +54,35 @@ field_name("Part Number", style="kebab")      # 'part-number'
 Any other value for `style` raises `ValueError`
 (`labelsmith.UnsupportedStyleError`).
 
+## Acronyms in camelCase and PascalCase
+
+All-uppercase tokens are preserved as acronyms in `camel` and `pascal`
+styles, so manufacturing/checksheet labels with industry-standard
+acronyms stay recognizable:
+
+```python
+field_name("AIAG/VDA Severity", style="pascal")     # 'AIAGVDASeverity'
+field_name("AIAG/VDA Severity", style="camel")      # 'aiagVDASeverity'
+field_name("PFMEA Cause(s)", style="pascal")        # 'PFMEACauseS'
+field_name("N Gage Length (MACH)", style="pascal")  # 'NGageLengthMACH'
+field_name("HTTPResponseCode", style="pascal")      # 'HTTPResponseCode'
+```
+
+camelCase always lowercases the first token, even when it's an acronym:
+
+```python
+field_name("AIAG", style="camel")   # 'aiag'
+field_name("AIAG", style="pascal")  # 'AIAG'
+```
+
+`snake` and `kebab` always lowercase every token, so acronym handling
+doesn't apply there:
+
+```python
+field_name("AIAG/VDA Severity", style="snake")  # 'aiag_vda_severity'
+field_name("AIAG/VDA Severity", style="kebab")  # 'aiag-vda-severity'
+```
+
 ## Cleaning behavior
 
 LabelSmith trims whitespace, decomposes Unicode to ASCII where reasonable,
