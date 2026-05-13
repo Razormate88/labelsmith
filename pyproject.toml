@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "labelsmith"
+version = "0.1.0"
+description = "Turn messy human labels into clean, consistent, code-safe field names."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "LabelSmith contributors" },
+]
+maintainers = [
+    { name = "LabelSmith contributors" },
+]
+keywords = [
+    "labels",
+    "field-names",
+    "identifiers",
+    "slugify",
+    "data-cleaning",
+    "naming",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/labelsmith/labelsmith"
+Repository = "https://github.com/labelsmith/labelsmith"
+Issues = "https://github.com/labelsmith/labelsmith/issues"
+Changelog = "https://github.com/labelsmith/labelsmith/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/labelsmith"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+    "/pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+xfail_strict = true
