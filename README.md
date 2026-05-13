@@ -1,14 +1,17 @@
 # LabelSmith
 
-> Turn messy human labels into clean, consistent, code-safe field names.
+[![PyPI version](https://img.shields.io/pypi/v/labelsmith.svg)](https://pypi.org/project/labelsmith/)
+[![Python versions](https://img.shields.io/pypi/pyversions/labelsmith.svg)](https://pypi.org/project/labelsmith/)
+[![License: MIT](https://img.shields.io/pypi/l/labelsmith.svg)](LICENSE)
 
-LabelSmith takes the kind of strings that show up on real-world spreadsheets,
-form captions, checksheets, and PDF tables — `"Part Number"`, `"Op. #2 (mm)"`,
-`"Café — naïve"` — and converts them into deterministic identifiers your code
-can rely on.
+> Forge clean, code-safe field names from messy labels.
 
-It is intentionally small. No AI, no LLM calls, no Excel or PDF parsing — just
-a focused, well-tested core for naming things.
+LabelSmith takes the kind of strings that show up on real-world
+spreadsheets, form captions, checksheets, and PDF tables —
+`"Part Number"`, `"Op. #2 (mm)"`, `"AIAG/VDA Severity"` — and converts
+them into deterministic identifiers your code can rely on.
+
+It is intentionally small, dependency-free, and fully typed.
 
 ## Install
 
@@ -16,18 +19,21 @@ a focused, well-tested core for naming things.
 pip install labelsmith
 ```
 
-LabelSmith runs on Python 3.10+ and depends only on the standard library.
+LabelSmith runs on Python 3.10+ and has **no runtime dependencies**.
 
 ## Quick start
 
 ```python
 from labelsmith import field_name, field_names, field_map
 
-field_name("Part Number")
-# 'part_number'
+field_name("N Gage Length (MACH)")
+# 'n_gage_length_mach'
 
-field_names(["Part Number", "Part Number", "Op. #2"])
-# ['part_number', 'part_number_2', 'op_2']
+field_name("AIAG/VDA Severity", style="pascal")
+# 'AIAGVDASeverity'
+
+field_names(["Part Number", "Part Number"])
+# ['part_number', 'part_number_2']
 
 field_map(["Part Number", "Part Number"])
 # {'Part Number': 'part_number', 'Part Number (2)': 'part_number_2'}
@@ -35,37 +41,45 @@ field_map(["Part Number", "Part Number"])
 
 ## Styles
 
-LabelSmith supports four output styles:
+Four output styles, picked with the `style` keyword:
 
-| Style    | Example output  |
-| -------- | --------------- |
-| `snake`  | `part_number`   |
-| `camel`  | `partNumber`    |
-| `pascal` | `PartNumber`    |
-| `kebab`  | `part-number`   |
+| Style    | Example input   | Output         |
+| -------- | --------------- | -------------- |
+| `snake`  | `"Part Number"` | `part_number`  |
+| `camel`  | `"Part Number"` | `partNumber`   |
+| `pascal` | `"Part Number"` | `PartNumber`   |
+| `kebab`  | `"Part Number"` | `part-number`  |
 
 ```python
-field_name("Part Number")                     # 'part_number'
-field_name("Part Number", style="camel")      # 'partNumber'
-field_name("Part Number", style="pascal")     # 'PartNumber'
-field_name("Part Number", style="kebab")      # 'part-number'
+field_name("Part Number")                  # 'part_number'
+field_name("Part Number", style="camel")   # 'partNumber'
+field_name("Part Number", style="pascal")  # 'PartNumber'
+field_name("Part Number", style="kebab")   # 'part-number'
 ```
 
-Any other value for `style` raises `ValueError`
-(`labelsmith.UnsupportedStyleError`).
+Any other value for `style` raises `labelsmith.UnsupportedStyleError`
+(a `ValueError` subclass).
 
-## Acronyms in camelCase and PascalCase
+## Acronym behavior
 
-All-uppercase tokens are preserved as acronyms in `camel` and `pascal`
-styles, so manufacturing/checksheet labels with industry-standard
-acronyms stay recognizable:
+`snake` and `kebab` lowercase every token, so acronyms become plain
+lowercase runs:
 
 ```python
-field_name("AIAG/VDA Severity", style="pascal")     # 'AIAGVDASeverity'
-field_name("AIAG/VDA Severity", style="camel")      # 'aiagVDASeverity'
-field_name("PFMEA Cause(s)", style="pascal")        # 'PFMEACauseS'
-field_name("N Gage Length (MACH)", style="pascal")  # 'NGageLengthMACH'
-field_name("HTTPResponseCode", style="pascal")      # 'HTTPResponseCode'
+field_name("AIAG/VDA Severity", style="snake")  # 'aiag_vda_severity'
+field_name("AIAG/VDA Severity", style="kebab")  # 'aiag-vda-severity'
+```
+
+`camel` and `pascal` **preserve all-uppercase tokens as acronyms**, so
+manufacturing/checksheet labels with industry-standard acronyms stay
+recognizable:
+
+```python
+field_name("AIAG/VDA Severity", style="pascal")  # 'AIAGVDASeverity'
+field_name("AIAG/VDA Severity", style="camel")   # 'aiagVDASeverity'
+field_name("OK / NG", style="pascal")            # 'OKNG'
+field_name("OK / NG", style="camel")             # 'okNG'
+field_name("HTTPResponseCode", style="pascal")   # 'HTTPResponseCode'
 ```
 
 camelCase always lowercases the first token, even when it's an acronym:
@@ -75,111 +89,9 @@ field_name("AIAG", style="camel")   # 'aiag'
 field_name("AIAG", style="pascal")  # 'AIAG'
 ```
 
-`snake` and `kebab` always lowercase every token, so acronym handling
-doesn't apply there:
-
-```python
-field_name("AIAG/VDA Severity", style="snake")  # 'aiag_vda_severity'
-field_name("AIAG/VDA Severity", style="kebab")  # 'aiag-vda-severity'
-```
-
-## Cleaning behavior
-
-LabelSmith trims whitespace, decomposes Unicode to ASCII where reasonable,
-splits on punctuation, symbols, and case boundaries, then re-joins using the
-requested style.
-
-```python
-field_name("  Café — Naïve  ")        # 'cafe_naive'
-field_name("Op. #2 (mm)")             # 'op_2_mm'
-field_name("HTTPResponseCode")        # 'http_response_code'
-field_name("first/second-third")      # 'first_second_third'
-```
-
-If a label normalizes to nothing, you get the `prefix` rendered in the
-chosen style. The default prefix is `"field"`, so:
-
-```python
-field_name("")                       # 'field'
-field_name("***")                    # 'field'
-field_name("", prefix="col")         # 'col'
-field_name("", style="pascal")       # 'Field'
-field_name("", style="kebab", prefix="my field")   # 'my-field'
-field_name("", style="camel", prefix="my field")   # 'myField'
-```
-
-If `prefix` itself is empty or contains no usable alphanumeric content
-(`""`, `"_"`, `"---"`, whitespace), LabelSmith falls back to `"field"` so
-you never get back an unusable identifier:
-
-```python
-field_name("", prefix="")        # 'field'
-field_name("", prefix="_")       # 'field'
-field_name("***", prefix="---")  # 'field'
-```
-
-## Labels that start with a digit
-
-By default, names that would start with a digit get the configured prefix
-woven in using the chosen style, so the result is a safe identifier *and*
-stays consistent with the style you asked for:
-
-```python
-field_name("123 Part Number", style="snake")    # 'field_123_part_number'
-field_name("123 Part Number", style="kebab")    # 'field-123-part-number'
-field_name("123 Part Number", style="camel")    # 'field123PartNumber'
-field_name("123 Part Number", style="pascal")   # 'Field123PartNumber'
-```
-
-Opt out with `allow_leading_digit=True`, or supply a different `prefix`:
-
-```python
-field_name("1st Place", allow_leading_digit=True)    # '1_st_place'
-field_name("1st", prefix="col")                      # 'col_1_st'
-field_name("1st", prefix="col", style="kebab")       # 'col-1-st'
-```
-
-If `prefix` is empty or contains no usable alphanumeric content
-(`""`, `"_"`, `"---"`, whitespace), LabelSmith falls back to `"field"` so
-the result is always a safe identifier:
-
-```python
-field_name("123 Part", prefix="")        # 'field_123_part'
-field_name("123 Part", prefix="---", style="kebab")   # 'field-123-part'
-```
-
-Multi-token prefixes are tokenized and re-styled along with the label, so
-the whole result stays consistent:
-
-```python
-field_name("123 Part Number", prefix="my field", style="camel")
-# 'myField123PartNumber'
-field_name("123 Part Number", prefix="my field", style="pascal")
-# 'MyField123PartNumber'
-```
-
-## Reserved words
-
-Names that collide with Python reserved keywords get a trailing underscore so
-they remain usable as identifiers:
-
-```python
-field_name("class")     # 'class_'
-field_name("for")       # 'for_'
-```
-
-You can supply your own reserved set — useful for ORM column names, dataframe
-columns, or framework-reserved attributes:
-
-```python
-field_name("id", reserved_words={"id", "type"})
-# 'id_'
-```
-
 ## Duplicate handling
 
-`field_names` guarantees unique outputs. Suffix style follows the chosen
-naming style so the output stays consistent:
+`field_names` guarantees unique output, with style-appropriate suffixes:
 
 ```python
 field_names(["Part Number", "Part Number", "Part Number"])
@@ -188,16 +100,12 @@ field_names(["Part Number", "Part Number", "Part Number"])
 field_names(["Part Number", "Part Number"], style="kebab")
 # ['part-number', 'part-number-2']
 
-field_names(["Part Number", "Part Number"], style="camel")
-# ['partNumber', 'partNumber2']
-
 field_names(["Part Number", "Part Number"], style="pascal")
 # ['PartNumber', 'PartNumber2']
 ```
 
-`field_map` returns a dictionary, so when the *original* label is repeated
-the key is disambiguated with an occurrence marker — the values still follow
-`field_names` uniqueness rules:
+`field_map` keeps every original label as a dictionary key, using
+`" (N)"` markers when the same label appears more than once:
 
 ```python
 field_map(["Part Number", "Part Number", "Notes"])
@@ -206,6 +114,61 @@ field_map(["Part Number", "Part Number", "Notes"])
 #     'Part Number (2)': 'part_number_2',
 #     'Notes': 'notes',
 # }
+```
+
+## Reserved-word handling
+
+Results that collide with Python reserved keywords get a trailing
+underscore so they stay valid identifiers:
+
+```python
+field_name("class")  # 'class_'
+field_name("for")    # 'for_'
+```
+
+You can supply your own reserved set — handy for ORM columns,
+DataFrame headers, or framework-reserved attributes:
+
+```python
+field_name("id", reserved_words={"id", "type"})  # 'id_'
+```
+
+## Empty, unusable, and leading-digit fallbacks
+
+LabelSmith never returns an unusable identifier. If the cleaned label is
+empty, the `prefix` is rendered in the chosen style:
+
+```python
+field_name("")                       # 'field'
+field_name("***")                    # 'field'
+field_name("", style="pascal")       # 'Field'
+field_name("", style="camel",  prefix="my field")  # 'myField'
+field_name("", style="pascal", prefix="my field")  # 'MyField'
+```
+
+If the cleaned label would start with a digit, the prefix is woven in
+front, in the chosen style:
+
+```python
+field_name("123 Part Number", style="snake")   # 'field_123_part_number'
+field_name("123 Part Number", style="kebab")   # 'field-123-part-number'
+field_name("123 Part Number", style="camel")   # 'field123PartNumber'
+field_name("123 Part Number", style="pascal")  # 'Field123PartNumber'
+```
+
+If the `prefix` itself contains no usable alphanumeric content
+(`""`, `"_"`, `"---"`, whitespace), the fallback is `"field"`:
+
+```python
+field_name("",    prefix="")        # 'field'
+field_name("123", prefix="_")       # 'field_123'
+field_name("***", prefix="---")     # 'field'
+```
+
+Opt out of digit prefixing with `allow_leading_digit=True`:
+
+```python
+field_name("1st Place", allow_leading_digit=True)  # '1_st_place'
 ```
 
 ## API surface
@@ -221,15 +184,52 @@ labelsmith.field_map(labels, *, style="snake", prefix="field",
                      allow_leading_digit=False, reserved_words=None) -> dict[str, str]
 ```
 
-LabelSmith ships with a `py.typed` marker so type checkers will read the
+LabelSmith ships with a `py.typed` marker so type checkers read the
 inline annotations directly from the installed package.
+
+## Why LabelSmith?
+
+* **Intentionally small.** One module, three public functions.
+* **Deterministic.** Same input, same output, every time. No
+  heuristics that surprise you on edge cases.
+* **No runtime dependencies.** Standard library only.
+* **Typed.** Inline annotations + `py.typed`.
+* **Useful where labels are messy:** spreadsheet headers, form
+  captions, checksheet questions, workflow/schema bootstrapping, API
+  field naming, database column generation.
+
+## Not included (yet)
+
+LabelSmith stays focused on naming. The following are deliberately out
+of scope for v0.1.x:
+
+* No Excel or PDF parsing.
+* No AI or LLM calls.
+* No database integration.
+* No schema generation from labels.
+
+These may land as separate companion packages in the future; LabelSmith
+itself stays small.
 
 ## Development
 
 ```bash
 pip install -e ".[dev]"
 python -m pytest
+python -m build
+python -m twine check dist/*
 ```
+
+The test suite uses only `pytest` (see `pyproject.toml` optional `dev`
+extra). Builds use `hatchling`. All commands are run from the project
+root.
+
+## Links
+
+* PyPI: <https://pypi.org/project/labelsmith/>
+* GitHub: <https://github.com/Razormate88/labelsmith>
+* Issues: <https://github.com/Razormate88/labelsmith/issues>
+* Changelog: [CHANGELOG.md](./CHANGELOG.md)
 
 ## License
 

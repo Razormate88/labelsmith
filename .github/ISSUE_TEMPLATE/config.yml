@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Bug report
+    url: https://github.com/Razormate88/labelsmith/issues/new?template=bug_report.md
+    about: Report unexpected behavior in LabelSmith.
+  - name: Feature request
+    url: https://github.com/Razormate88/labelsmith/issues/new?template=feature_request.md
+    about: Propose a new option, style, or behavior.
+  - name: Security report
+    url: https://github.com/Razormate88/labelsmith/security
+    about: Report a security issue privately. See SECURITY.md for guidance.

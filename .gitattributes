@@ -1,0 +1,20 @@
+# Default: detect text vs binary automatically, normalize to LF in the
+# repo and on checkout (no CRLF noise in diffs).
+* text=auto eol=lf
+
+# Windows-specific scripts: keep CRLF on checkout so cmd.exe and
+# PowerShell hosts run them without surprises.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Common binary types — never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.whl binary
